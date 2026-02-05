@@ -1,0 +1,31 @@
+<h1>{{product.title}}</h1>
+
+<p>{{product.description}}</p>
+
+<ul>
+    <li>Precio: ${{product.price}}</li>
+    <li>Categoría: {{product.category}}</li>
+    <li>Stock: {{product.stock}}</li>
+</ul>
+
+<button id="addToCartBtn"
+        data-pid="{{product._id}}"
+        data-cid="{{cartId}}">
+    Agregar al carrito
+</button>
+
+<br><br>
+<a href="/products">Volver a productos</a>
+
+<script>
+document.getElementById("addToCartBtn").addEventListener("click", async () => {
+    const pid = document.getElementById("addToCartBtn").dataset.pid;
+    const cid = document.getElementById("addToCartBtn").dataset.cid;
+
+    await fetch(`/api/carts/${cid}/products/${pid}`, {
+        method: "POST"
+    });
+
+    alert("Producto agregado al carrito");
+});
+</script>
