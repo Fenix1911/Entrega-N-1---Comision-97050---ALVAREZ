@@ -1,6 +1,6 @@
 import User from "../models/User.js";
 
-class UserManager {
+class UserDAO {
 
   async findByEmail(email) {
     return await User.findOne({ email });
@@ -14,6 +14,10 @@ class UserManager {
     return await User.findById(id);
   }
 
+  async update(id, data) {
+    return User.findByIdAndUpdate(id, data, { new: true });
+  }
+
 }
 
-export default new UserManager();
+export default new UserDAO();

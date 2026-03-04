@@ -1,68 +1,72 @@
 import { Router } from "express";
-import jwt from "jsonwebtoken";
-import User from "../models/User.js";
-import { createHash, isValidPassword } from "../utils/crypt.js";
-import { JWT_SECRET } from "../config/jwt.js";
-import passport from "../config/passport.js";
+import passport from "passport";
 
+import UserDAO from "../dao/UserDAO.js";
+import UserRepository from "../repositories/UserRepository";
+
+import CartDAO from "../dao/CartDAO.js";
+import CartRepository from "../repositories/CartRepository.js";
+
+import AuthService from "../services/auth.service.js";
+
+import { authorize } from "../middlewares/authorization.middleware.js";
+import UserCurrentDTO from "../dto/UserCurrentDTO";
 
 const router = Router();
 
-router.post('/register', async (req, res) => {
-    const { first_name, last_name, email, age, password } = req.body;
-    
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-        return res.status(400).json({ message: 'El usuario ya existe' });
-    }
+const userRepository = new UserRepository(UserDAO);
+const cartRepository = new CartRepository(CartDAO);
+const authService = new AuthService(userRepository, process.env.JWT_SECRET, cartRepository);
 
-    const newCart = await Cart.create({ products: [] });
 
-    const user = await User.create({
-        first_name,
-        last_name,
-        email,
-        age,
-        password: createHash(password),
-        cart: newCart._id
-    });
 
-    res.json({ message: 'Usuario registrado exitosamente' });
+
+router.post("/register", async (req, res) => {
+  try {
+    await authService.register(req.body);
+    res.json({ status: "success" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
+  try {
     const { email, password } = req.body;
-    
-    const user = await User.findOne({ email });
-    if (!user || !isValidPassword(user, password)) {
-        return res.status(401).json({ error: "Credenciales inválidas" });
-    }
 
-    const token = jwt.sign(
-        { id: user._id, role: user.role }, 
-        JWT_SECRET, 
-        { expiresIn: '1h' }
-    );
-    
-    res.cookie('jwtCookie', token, { 
-        httpOnly: true,
-        maxAge: 3600000,
+    const { token } = await authService.login(email, password);
+
+    res.cookie("coderToken", token, {
+      httpOnly: true,
+      maxAge: 3600000
     });
-    res.json({ message: 'Login exitoso' });
+
+    res.json({ status: "success" });
+
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 router.get(
-  "/current",
-  passport.authenticate("jwt", { session: false }),
-  (req, res) => {
-    res.json({ user: req.user });
-  }
+    "/current",
+    passport.authenticate("jwt", { session: false }),
+    (req, res) => {
+        const userDTO = new UserCurrentDTO(req.user);
+
+        res.json({ user: userDTO });
+
+    }
 );
 
-router.post('/logout', (req, res) => {
-    res.clearCookie('jwtCookie');
-    res.json({ message: 'Logout exitoso' });
-}
-);
+router.post("/logout", (req, res) => {
+
+    res.clearCookie("jwtCookie");
+
+    res.json({
+        message: "Logout exitoso"
+    });
+
+});
 
 export default router;

@@ -1,121 +1,42 @@
 import { Router } from "express";
-import ProductManager from "../dao/ProductManager.js";
+import passport from "passport";
+
+import ProductDAO from "../dao/ProductDAO.js";
+import ProductRepository from "../repositories/ProductRepository.js";
+
+import {authorize} from "../middlewares/auth.middleware.js";
+
 
 const router = Router();
+const productRepository = new ProductRepository(new ProductDAO);
 
-/**
- * GET /api/products
- * Query params:
- * - limit
- * - page
- * - sort (asc | desc)
- * - query (category o status)
- */
+
 
 router.get("/", async (req, res) => {
-    try {
-        const {
-            limit = 10,
-            page = 1,
-            sort,
-            query
-        } = req.query;
+    
+    const result = await productRepository.getAll({}, {limit: 10, page: 1, lean: true})
 
-        const filter = {};
+    res.json(result);
+});
 
-        if (query) {
-            if (query === "true" || query === "false") {
-                filter.status = query === "true";
-            } else {
-                filter.category = query;
-            }
-        }
+router.post("/", passport.authenticate("jwt", { session: false }), authorize(["admin"]), async (req, res) => {
+    const product = await productRepository.create(req.body);
+    res.json(product);
+});
 
-        const options = {
-            page: Number(page),
-            limit: Number(limit),
-            lean: true
-        };
+router.delete(
+    "/:pid",
+    passport.authenticate("jwt", { session: false }),
+    authorize("admin"),
+    async (req, res) => {
 
-        if (sort === "asc" || sort === "desc") {
-            options.sort = { price: sort === "asc" ? 1 : -1 };
-        }
-
-        const result = await ProductManager.getProducts(filter, options);
+        await productRepository.deleteProduct(req.params.pid);
 
         res.json({
-            status: "success",
-            payload: result.docs,
-            totalPages: result.totalPages,
-            prevPage: result.prevPage,
-            nextPage: result.nextPage,
-            page: result.page,
-            hasPrevPage: result.hasPrevPage,
-            hasNextPage: result.hasNextPage,
-            prevLink: result.hasPrevPage
-                ? `/api/products?page=${result.prevPage}`
-                : null,
-            nextLink: result.hasNextPage
-                ? `/api/products?page=${result.nextPage}`
-                : null
+            message: "Producto eliminado"
         });
 
-    } catch (error) {
-        res.status(500).json({ status: "error", error: error.message });
     }
-});
-
-router.post("/", async (req, res) => {
-    try {
-        const newProduct = await ProductManager.addProduct(req.body);
-
-        res.status(201).json({
-            status: "success",
-            payload: newProduct
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            status: "error",
-            error: error.message
-        });
-    }
-});
-
-router.get("/:pid", async (req, res) => {
-    try {
-        const product = await ProductManager.getProductById(req.params.pid);
-        if (!product) {
-            return res.status(404).json({ status: "error", error: "Producto no encontrado" });
-        }
-        res.json({ status: "success", payload: product });
-    } catch (error) {
-        res.status(400).json({ status: "error", error: "ID inválido" });
-    }
-});
-
-router.put("/:pid", async (req, res) => {
-    try {
-        const updated = await ProductManager.updateProduct(req.params.pid, req.body);
-        if (!updated) {
-            return res.status(404).json({ status: "error", error: "Producto no encontrado" });
-        }
-        res.json({ status: "success", payload: updated });
-    } catch (error) {
-        res.status(400).json({ status: "error", error: error.message });
-    }
-});
-
-router.delete("/:pid", async (req, res) => {
-    try {
-        const deleted = await ProductManager.deleteProduct(req.params.pid);
-        if (!deleted) {
-            return res.status(404).json({ status: "error", error: "Producto no encontrado" });
-        }
-        res.json({ status: "success", message: "Producto eliminado" });
-    } catch (error) {
-        res.status(400).json({ status: "error", error: error.message });
-    }
-});
+);
 
 export default router;
