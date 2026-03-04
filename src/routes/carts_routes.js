@@ -1,17 +1,30 @@
 import { Router } from "express";
 import passport from "passport";
 
-import CartDAO from "../dao/mongo/CartDAO.js";
+import ProductDAO from "../dao/ProductDAO.js";
+import CartDAO from "../dao/CartDAO.js";
 import CartRepository from "../repositories/CartRepository.js";
 
 import CartService from "../services/cart.service.js";
 
 import { authorize } from "../middlewares/authorization.middleware.js";
 
+import ProductRepository from "../repositories/ProductRepository.js";
+import TicketDAO from "../dao/TicketDAO.js";
+import TicketRepository from "../repositories/TicketRepository.js";
+import PurchaseService from "../services/purchase.service.js";
+
+
 const router = Router();
 
+const ticketRepository = new TicketRepository(new TicketDAO());
+const productRepository = new ProductRepository(new ProductDAO());
 const cartRepository = new CartRepository(new CartDAO());
 const cartService = new CartService(cartRepository);
+const purchaseService = new PurchaseService(cartRepository, productRepository, ticketRepository);
+
+
+
 
 
 router.post("/", async (req, res) => {
@@ -44,7 +57,7 @@ router.post(
 
         try {
 
-            const cart = await cartService.addProduct(
+            const cart = await cartService.addProductToCart(
                 req.params.cid,
                 req.params.pid
             );
@@ -130,6 +143,24 @@ router.delete("/:cid", async (req, res) => {
 
     res.json(cart);
 
+});
+
+router.post("/:cid/purchase",passport.authenticate("jwt", { session: false }), async (req, res) => {
+
+    try {
+
+        const result = await purchaseService.purchaseCart(
+            req.params.cid,
+            req.user.email
+        );
+
+        res.json(result);
+    } catch (error) {
+
+        res.status(400).json({
+        error: error.message
+    });
+    }
 });
 
 export default router;

@@ -3,26 +3,64 @@ import passport from "passport";
 
 import ProductDAO from "../dao/ProductDAO.js";
 import ProductRepository from "../repositories/ProductRepository.js";
+import ProductService from "../services/product.service.js";
 
-import {authorize} from "../middlewares/auth.middleware.js";
-
+import { authorize } from "../middlewares/authorization.middleware.js";
 
 const router = Router();
-const productRepository = new ProductRepository(new ProductDAO);
 
+const productRepository = new ProductRepository(new ProductDAO());
+const productService = new ProductService(productRepository);
 
 
 router.get("/", async (req, res) => {
-    
-    const result = await productRepository.getAll({}, {limit: 10, page: 1, lean: true})
+
+    const result = await productService.getProducts(req.query);
 
     res.json(result);
+
 });
 
-router.post("/", passport.authenticate("jwt", { session: false }), authorize(["admin"]), async (req, res) => {
-    const product = await productRepository.create(req.body);
+
+router.get("/:pid", async (req, res) => {
+
+    const product = await productService.getProductById(req.params.pid);
+
     res.json(product);
+
 });
+
+
+router.post(
+    "/",
+    passport.authenticate("jwt", { session: false }),
+    authorize("admin"),
+    async (req, res) => {
+
+        const product = await productService.createProduct(req.body);
+
+        res.status(201).json(product);
+
+    }
+);
+
+
+router.put(
+    "/:pid",
+    passport.authenticate("jwt", { session: false }),
+    authorize("admin"),
+    async (req, res) => {
+
+        const product = await productService.updateProduct(
+            req.params.pid,
+            req.body
+        );
+
+        res.json(product);
+
+    }
+);
+
 
 router.delete(
     "/:pid",
@@ -30,11 +68,9 @@ router.delete(
     authorize("admin"),
     async (req, res) => {
 
-        await productRepository.deleteProduct(req.params.pid);
+        await productService.deleteProduct(req.params.pid);
 
-        res.json({
-            message: "Producto eliminado"
-        });
+        res.json({ message: "Producto eliminado" });
 
     }
 );

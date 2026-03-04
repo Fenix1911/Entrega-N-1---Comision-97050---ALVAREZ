@@ -2,15 +2,15 @@ import User from "../models/User.js";
 
 class UserDAO {
 
-  async findByEmail(email) {
+  async getByEmail(email) {
     return await User.findOne({ email });
   }
 
-  async createUser(data) {
+  async create(data) {
     return await User.create(data);
   }
 
-  async findById(id) {
+  async getById(id) {
     return await User.findById(id);
   }
 
@@ -20,4 +20,4 @@ class UserDAO {
 
 }
 
-export default new UserDAO();
+export default UserDAO;

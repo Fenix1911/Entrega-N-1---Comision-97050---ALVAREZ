@@ -9,7 +9,7 @@ export default class ProductRepository {
     }
 
     getProductById(id) {
-        return this.dao.getById(id);
+        return this.dao.getProductById(id);
     }
 
     createProduct(productData) {

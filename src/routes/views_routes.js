@@ -1,6 +1,6 @@
 import { Router } from "express";
-import ProductManager from "../dao/ProductManager.js";
-import CartManager from "../dao/CartManager.js";
+import ProductDAO from "../dao/ProductDAO.js";
+import CartDAO from "../dao/CartDAO.js";
 
 const router = Router();
 
@@ -31,7 +31,7 @@ router.get("/products", async (req, res) => {
         options.sort = { price: sort === "asc" ? 1 : -1 };
     }
 
-    const result = await ProductManager.getProducts(filter, options);
+    const result = await ProductDAO.getAll(filter, options);
 
     res.render("products", {
         products: result.docs,
@@ -41,7 +41,7 @@ router.get("/products", async (req, res) => {
 
 router.get("/carts/:cid", async (req, res) => {
     try {
-        const cart = await CartManager.getCartById(req.params.cid);
+        const cart = await CartDAO.getById(req.params.cid);
 
         if (!cart) {
             return res.status(404).send("Carrito no encontrado");
@@ -59,7 +59,7 @@ router.get("/carts/:cid", async (req, res) => {
 
 router.get("/products/:pid", async (req, res) => {
     try {
-        const product = await ProductManager.getProductById(req.params.pid);
+        const product = await ProductDAO.getById(req.params.pid);
 
         if (!product) {
             return res.status(404).send("Producto no encontrado");

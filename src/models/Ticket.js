@@ -14,3 +14,5 @@ const ticketSchema = new moongose.Schema({
 });
 
 const Ticket = moongose.model('Ticket', ticketSchema);
+
+export default Ticket;

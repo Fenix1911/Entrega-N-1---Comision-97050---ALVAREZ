@@ -4,7 +4,7 @@ class ProductDAO {
     async getAll(filter = {}, options = {}) {
         return await Product.paginate(filter, options);
     }
-    async getById(id) {
+    async getProductById(id) {
         return await Product.findById(id).lean();
     }
     async create (productData) {
@@ -18,4 +18,5 @@ class ProductDAO {
     }
 }
 
-export default new ProductDAO();
+export default ProductDAO;
+

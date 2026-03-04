@@ -6,7 +6,7 @@ import User from '../models/User.js';
 const cookiesExtractor = (req) => {
     let token = null;
     if (req && req.cookies) {
-        token = req.cookies['jwtCookie'];
+        token = req.cookies['coderToken'];
     }
     return token;
 };

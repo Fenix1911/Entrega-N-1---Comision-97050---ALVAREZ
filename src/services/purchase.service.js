@@ -6,6 +6,7 @@ export default class PurchaseService {
     this.ticketRepository = ticketRepository;
   }
 
+ 
   generateTicketCode() {
     return `TCK-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
   }

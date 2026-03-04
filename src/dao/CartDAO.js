@@ -6,11 +6,11 @@ class CartDAO {
         return await Cart.create({ products: [] });
     }
 
-    async getById(cid) {
+    async getCartById(cid) {
         return await Cart.findById(cid).populate("products.product").lean();
     }
 
-    async update (id, data) {
+    async updateCart (id, data) {
         return await Cart.findByIdAndUpdate(
             id,
             data,
@@ -20,7 +20,7 @@ class CartDAO {
 
 }
 
-export default new CartDAO();
+export default CartDAO;
 
 
 
